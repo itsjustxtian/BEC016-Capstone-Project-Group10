@@ -2,10 +2,17 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include "secrets.h"
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
 
 // WiFi & MQTT clients
 WiFiClientSecure net;
 PubSubClient client(net);
+
+//MPU 6050 declaration
+Adafruit_MPU6050 mpu;
+sensors_event_t event;
 
 void connectToWiFi() {
   Serial.print("Connecting to WiFi...");
@@ -44,6 +51,13 @@ void connectAWS() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
+
+  while (!mpu.begin()) {
+    Serial.println("MPU6050 not connected!");
+    delay(1000);
+  }
+
+  Serial.println("MPU6050 ready!");
 
   connectToWiFi();
   connectAWS();
