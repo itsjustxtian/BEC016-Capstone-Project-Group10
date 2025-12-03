@@ -155,13 +155,13 @@ _**Reminder:** Replace the sample image below with your final output demonstrati
    - **Name**: _BEC016-Capstone-Policy-Group10_
    - **Link**: _https://us-west-2.console.aws.amazon.com/iot/home?region=us-west-2#/policy/BEC016-Capstone-Policy-Group10_
 5. **AWS IoT Rule #1**:
-   - **Name**: _**not yet**_
-   - **Link**: _**not yet**_
-   - **Description**: _**to follow**_
+   - **Name**: BEC016_Capstone_Rule01_Group10
+   - **Link**: https://us-west-2.console.aws.amazon.com/iot/home?region=us-west-2#/rule/BEC016_Capstone_Rule01_Group10
+   - **Description**: _Sends a command to turn on the LED and the buzzer when sensor readings exceed the set threshold/logic._
 6. **AWS IoT Rule #2**:
-   - **Name**: _**not yet**_
-   - **Link**: _**not yet**_
-   - **Description**: _**to follow**_
+   - **Name**: BEC016_Capstone_Rule02_Group10
+   - **Link**: https://us-west-2.console.aws.amazon.com/iot/home?region=us-west-2#/rule/BEC016_Capstone_Rule02_Group10
+   - **Description**: _Sends a command to turn off the LED and the buzzer when sensor readings have stopped exceed the set threshold/logic._
 7. _**Insert additional resources if needed**_
 
 ## ESP32 Details:

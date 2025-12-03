@@ -33,6 +33,10 @@ unsigned long lastPublishTime = 0;       // Stores last publish timestamp
 const long publishInterval = 2000;       // Interval in milliseconds (2 seconds)
                                           // Publishing interval for MPU6050 sensor data
 
+unsigned long lastButtonPress = 0;
+const unsigned long debounceDelay = 50;   // 50 ms debounce window
+
+
 void connectToWiFi() {
     // Print a message to the Serial Monitor to indicate connection attempt
     Serial.print("Connecting to WiFi");
@@ -245,10 +249,20 @@ void loop() {
     lastPublishTime = millis();
   }
 
-  // 🚨 Alarm stop condition
-  if (digitalRead(BUTTON_PIN) == LOW) {  // button pressed
-    digitalWrite(LED_PIN, LOW);
-    noTone(BUZZER_PIN);
-    Serial.println("Alarm stopped by button");
-  }
+    // 🚨 Alarm stop condition with debounce
+    int buttonState = digitalRead(BUTTON_PIN);
+
+    if (buttonState == LOW) {  // button pressed
+        unsigned long currentTime = millis();
+
+        // Only act if enough time has passed since last press
+        if (currentTime - lastButtonPress > debounceDelay) {
+            digitalWrite(LED_PIN, LOW);
+            noTone(BUZZER_PIN);
+            Serial.println("Alarm stopped by button");
+
+            // Record the time of this press
+            lastButtonPress = currentTime;
+        }
+    }
 }
