@@ -168,36 +168,32 @@ _**Reminder:** Replace the sample image below with your final output demonstrati
 
 _**to follow**_
 
-<!-- _Provide the details of your MQTT topics used for communication between the ESP32 and the cloud._
+_Provide the details of your MQTT topics used for communication between the ESP32 and the cloud._
 _**Reminder:** Replace the sample details below with your own topics and json format details._
 
-1. **Subscription Topic**: _esp32/led/sub_
-2. **Publishing Topic**: _esp32/led/pub_
+1. **Subscription Topic**: _devices/BEC016-Thing-Group10/commands_
+2. **Publishing Topic**: _devices/BEC016-Thing-Group10/data_
 3. **Sample JSON format for Subscription Topic**:
-    ```json
-    // REPLACE THIS TEXT
-    {
-        "temperature":"32",
-        "humidity":"20"
-    }
-    ```
+   ```json
+   {
+   	"accelX": 0,
+   	"accelY": 0,
+   	"accelZ": 9.80665,
+   	"gyroX": 0,
+   	"gyroY": 0,
+   	"gyroZ": 0,
+   	"temperature": 24.00059
+   }
+   ```
 4. **Sample JSON format for Publishing Topic**:
-    ```json
-    // REPLACE THIS TEXT
-    {"led":"on"}
-    ``` -->
+   <!-- ```json
+   // REPLACE THIS TEXT
+   { "led": "on" }
+   ``` -->
 
 ## Communication Flow
 
-_**to follow**_
-
-<!-- _Describe the data flow in simple terms:_
-_Use arrows (→) to indicate the direction of data movement._
-_Example:_
-_“ESP32 reads data → publishes via MQTT → AWS IoT Core → App/Cloud Dashboard”_
-_“App sends control commands → AWS IoT Core → ESP32 receives and acts”_
-
-* _**Insert communication flow here**_ -->
+- _**Earthquake Sensor (MPU6050 on ESP32) -> ESP32 reads vibration/acceleration data -> ESP32 formats data into JSON -> Publishes via MQTT -> AWS IoT Core (MQTT broker + rules engine) -> App / Cloud Dashboard (visualizes sensor data, alerts users)**_
 
 ## References & Additional Notes
 

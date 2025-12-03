@@ -120,7 +120,7 @@ void readSensorData() {
 
 void publishMessage(){
     // Create a JSON document in memory with a 512-byte buffer capacity
-    StaticJsonDocument<512> doc;
+    StaticJsonDocument<200> doc;
 
     // Add accelerometer data to the JSON payload
     doc["accelX"] = accelX;
@@ -136,7 +136,7 @@ void publishMessage(){
     doc["temperature"] = temperature;
 
     // Create a buffer to store the serialized JSON string
-    char jsonBuffer[512];
+    char jsonBuffer[256];
 
     // Serialize the JSON document into the buffer
     serializeJson(doc, jsonBuffer);
