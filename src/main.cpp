@@ -12,6 +12,10 @@
 #define AWS_IOT_PUBLISH_TOPIC "devices/" AWS_IOT_CLIENT_ID "/data" // Topic to publish sensor data to AWS IoT Core
 #define AWS_IOT_SUBSCRIBE_TOPIC  "devices/" AWS_IOT_CLIENT_ID "/commands" // Topic to be subscribe by the ESP32
 
+#define LED_PIN 19
+#define BUZZER_PIN 18
+#define BUTTON_PIN 23
+
 // MPU6050 sensor object
 Adafruit_MPU6050 mpu;
 
@@ -158,11 +162,8 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   Serial.print("Incoming message on topic: ");
   Serial.println(topic);
 
-  // Create a JSON document with 200 bytes capacity
   JsonDocument doc;
 
-  // Deserialize the payload into the JSON document
-  // `deserializeJson` is a function from the ArduinoJson library that converts JSON string data into a structured format.
   DeserializationError error = deserializeJson(doc, payload, length);
   if (error) {
     Serial.print("Failed to parse JSON: ");
@@ -170,9 +171,22 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
+  if (doc["earthquake"].is<const char*>()) {
+      const char* alarmCommand = doc["earthquake"];
+        if (strcmp(alarmCommand, "on") == 0) {
+            digitalWrite(LED_PIN, HIGH);
+            tone(BUZZER_PIN, 2093);   // continuous tone
+            Serial.println("Alarm ON");
+        } else if (strcmp(alarmCommand, "off") == 0) {
+            digitalWrite(LED_PIN, LOW);
+            noTone(BUZZER_PIN);       // stop tone
+            Serial.println("Alarm OFF");
+        }
+  }
+
   // If there's a 'message' key, print its value
   if (doc["message"].is<const char*>()) {
-    const char* msg = doc["message"]; // Extract the message string
+    const char* msg = doc["message"];
     Serial.print("Message: ");
     Serial.println(msg);
   } else {
@@ -184,6 +198,10 @@ void setup() {
     // Initialize serial communication for debugging at 115200 bits per second
     Serial.begin(115200);
     delay(1000);
+
+    pinMode(LED_PIN, OUTPUT);
+    pinMode(BUZZER_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
   
     // Print an initial status message to the Serial Monitor
     Serial.println("Starting ESP32 AWS IoT connection...");
@@ -218,26 +236,19 @@ void setup() {
 }
 
 void loop() {
-    // 1. Remove all delay() lines of code
+  client.loop();
 
-  client.loop();  // Always keep MQTT connection alive
-
-  // Check if it's time to read sensor and publish again
+  // Sensor publishing logic...
   if (millis() - lastPublishTime >= publishInterval) {
-
-    // 2. Read accelerometer and gyroscope data from MPU6050
     readSensorData();
-
-    // publish the data to AWS IoT
-    if(client.connected()){
-        publishMessage();
-    } else {
-        Serial.println("MQTT not connected, skipping publish.");
-    }
-
-    // 3. Update lastPublishTime
+    if (client.connected()) publishMessage();
     lastPublishTime = millis();
   }
 
-  // No blocking delays — loop keeps running fast
+  // 🚨 Alarm stop condition
+  if (digitalRead(BUTTON_PIN) == LOW) {  // button pressed
+    digitalWrite(LED_PIN, LOW);
+    noTone(BUZZER_PIN);
+    Serial.println("Alarm stopped by button");
+  }
 }

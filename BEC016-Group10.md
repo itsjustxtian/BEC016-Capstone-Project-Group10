@@ -186,10 +186,12 @@ _**Reminder:** Replace the sample details below with your own topics and json fo
    }
    ```
 4. **Sample JSON format for Publishing Topic**:
-   <!-- ```json
-   // REPLACE THIS TEXT
-   { "led": "on" }
-   ``` -->
+   ```json
+   {
+   	"message": "Earthquake detected!",
+   	"earthquake": "on"
+   }
+   ```
 
 ## Communication Flow
 
