@@ -132,15 +132,7 @@
 
 ## Diagram 2: Final Output
 
-_*To follow*_
-
-<!-- _AWS IoT Core Screenshot/Screenrecording (GIF) showing MQTT Test Client with subscribed topic and receiving/publishing messages_
-_It's best to record your screen for this diagram requirement. You may use the following tools:_
-_- Windows: https://www.screentogif.com/_
-_- Mac: https://apps.apple.com/us/app/giphy-capture-the-gif-maker/id668208984?mt=12_
-_**Reminder:** Replace the sample image below with your final output demonstration._
-
-![image](images/demo-expected-output.gif) -->
+![image](images/earthquake-sensor-demo.gif)
 
 ## AWS IoT Core Resources Details:
 
@@ -162,14 +154,8 @@ _**Reminder:** Replace the sample image below with your final output demonstrati
    - **Name**: BEC016_Capstone_Rule02_Group10
    - **Link**: https://us-west-2.console.aws.amazon.com/iot/home?region=us-west-2#/rule/BEC016_Capstone_Rule02_Group10
    - **Description**: _Sends a command to turn off the LED and the buzzer when sensor readings have stopped exceed the set threshold/logic._
-7. _**Insert additional resources if needed**_
 
 ## ESP32 Details:
-
-_**to follow**_
-
-_Provide the details of your MQTT topics used for communication between the ESP32 and the cloud._
-_**Reminder:** Replace the sample details below with your own topics and json format details._
 
 1. **Subscription Topic**: _devices/BEC016-Thing-Group10/commands_
 2. **Publishing Topic**: _devices/BEC016-Thing-Group10/data_
@@ -195,11 +181,11 @@ _**Reminder:** Replace the sample details below with your own topics and json fo
 
 ## Communication Flow
 
-- _**Earthquake Sensor (MPU6050 on ESP32) -> ESP32 reads vibration/acceleration data -> ESP32 formats data into JSON -> Publishes via MQTT -> AWS IoT Core (MQTT broker + rules engine) -> App / Cloud Dashboard (visualizes sensor data, alerts users)**_
+- _**Earthquake Sensor (MPU6050 on ESP32) -> ESP32 reads vibration/acceleration data -> ESP32 formats data into JSON -> Publishes via MQTT -> AWS IoT Core (MQTT broker + rules engine) -> Actuator Response**_
 
 ## References & Additional Notes
 
-_**to follow**_
+- _[Wokwi Supported Hardware Documentation](https://docs.wokwi.com/getting-started/supported-hardware)_
 
 <!-- _Include any helpful resources or documentation used (e.g., AWS IoT guides, MQTT libraries)._
 _Optional: Mention next steps for future improvements or scaling._ -->
