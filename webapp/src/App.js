@@ -20,7 +20,7 @@ function App() {
   const [connectionMode, setConnectionMode] = useState('simulation'); // 'simulation' or 'serial'
   const [alarmSound, setAlarmSound] = useState(true); // Enable/disable sound
   const [currentIntensity, setCurrentIntensity] = useState(0); // Real-time intensity
-  const [peakIntensity, setPeakIntensity] = useState(0); // Peak intensity for current session
+  const [peakIntensity, setPeakIntensity] = useState(0); // Peak intensity for current earthquake
   const [serialPorts, setSerialPorts] = useState([]);
   const [selectedPort, setSelectedPort] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -231,8 +231,8 @@ function App() {
               data: []
             };
             
-            // Update peak intensity
-            setPeakIntensity(prev => Math.max(prev, earthquakeControlRef.current.intensity));
+            // Set initial peak intensity for this earthquake
+            setPeakIntensity(earthquakeControlRef.current.intensity);
             
             // Only trigger alarm for magnitude 3.0 or higher (felt by people)
             if (earthquakeControlRef.current.intensity >= 3.0) {
@@ -283,10 +283,8 @@ function App() {
           earthquakeControlRef.current.intensity *= earthquakeControlRef.current.decay;
           setCurrentIntensity(earthquakeControlRef.current.intensity); // Update state for UI
           
-          // Track peak intensity
-          if (earthquakeControlRef.current.intensity > peakIntensity) {
-            setPeakIntensity(earthquakeControlRef.current.intensity);
-          }
+          // Track peak intensity during earthquake
+          setPeakIntensity(prev => Math.max(prev, earthquakeControlRef.current.intensity));
           
           if (earthquakeControlRef.current.intensity < 0.1) {
             // Save earthquake to history
@@ -307,6 +305,7 @@ function App() {
               setEarthquakeStatus('off');
             }
             setCurrentIntensity(0);
+            setPeakIntensity(0); // Reset peak after earthquake ends
             addLog('Seismic activity ended', 'info');
           } else if (earthquakeControlRef.current.intensity < 3.0 && !earthquakeControlRef.current.alarmDeactivated && earthquakeStatus === 'on') {
             // Turn off alarm if intensity drops below 3.0 (only once per earthquake)
@@ -431,7 +430,7 @@ function App() {
       };
       
       setCurrentIntensity(intensity);
-      setPeakIntensity(prev => Math.max(prev, intensity)); // Update peak if needed
+      setPeakIntensity(intensity); // Set initial peak for manual trigger
       setEarthquakeStatus('on');
       addLog(`Earthquake detected! Magnitude: ${intensity.toFixed(1)}`, 'alarm');
     } else {
@@ -447,11 +446,6 @@ function App() {
   const clearLogs = () => {
     setLogs([]);
     addLog('Logs cleared', 'info');
-  };
-  
-  const resetPeak = () => {
-    setPeakIntensity(0);
-    addLog('Peak intensity reset', 'info');
   };
 
   const exportGraphScreenshot = async () => {
@@ -882,7 +876,7 @@ function App() {
                     <div className="info-item">
                       <span className="info-label">Alarm:</span>
                       <span className="info-value">
-                        {currentIntensity >= 3.0 ? 'TRIGGERED' : 
+                        {earthquakeStatus === 'on' ? 'TRIGGERED' : 
                          currentIntensity > 0.1 ? 'BELOW THRESHOLD' : 'READY'}
                       </span>
                     </div>
@@ -891,17 +885,8 @@ function App() {
                       <span className="info-value">
                         {peakIntensity > 0 
                           ? peakIntensity.toFixed(1)
-                          : '(No Activity)'}
+                          : 'No Activity'}
                       </span>
-                      {peakIntensity > 0 && (
-                        <button 
-                          className="btn-reset-peak" 
-                          onClick={resetPeak}
-                          title="Reset peak value"
-                        >
-                          Reset
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
