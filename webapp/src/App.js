@@ -164,7 +164,8 @@ function App() {
     intensity: 0,
     decay: 0,
     phase: 0,
-    alarmDeactivated: false
+    alarmDeactivated: false,
+    alarmActive: false  // Track actual alarm state
   });
 
   // Play alarm sound effect
@@ -237,10 +238,12 @@ function App() {
             // Only trigger alarm for magnitude 3.0 or higher (felt by people)
             if (earthquakeControlRef.current.intensity >= 3.0) {
               addLog(`Earthquake detected! Magnitude: ${earthquakeControlRef.current.intensity.toFixed(1)}`, 'alarm');
+              earthquakeControlRef.current.alarmActive = true;
               setEarthquakeStatus('on'); // Trigger alarm
             } else {
               // Minor earthquake - log but don't alarm
               addLog(`Minor tremor detected. Magnitude: ${earthquakeControlRef.current.intensity.toFixed(1)} (Too weak to trigger alarm)`, 'info');
+              earthquakeControlRef.current.alarmActive = false;
             }
           }
         }
@@ -286,6 +289,21 @@ function App() {
           // Track peak intensity during earthquake
           setPeakIntensity(prev => Math.max(prev, earthquakeControlRef.current.intensity));
           
+          // Update alarm state based on current magnitude (3.0 threshold)
+          const shouldAlarmBeOn = earthquakeControlRef.current.intensity >= 3.0;
+          
+          if (shouldAlarmBeOn && !earthquakeControlRef.current.alarmActive) {
+            // Turn on alarm
+            earthquakeControlRef.current.alarmActive = true;
+            setEarthquakeStatus('on');
+            addLog(`Alarm activated (Magnitude: ${earthquakeControlRef.current.intensity.toFixed(1)})`, 'alarm');
+          } else if (!shouldAlarmBeOn && earthquakeControlRef.current.alarmActive) {
+            // Turn off alarm
+            earthquakeControlRef.current.alarmActive = false;
+            setEarthquakeStatus('off');
+            addLog(`Alarm deactivated (Magnitude below 3.0: ${earthquakeControlRef.current.intensity.toFixed(1)})`, 'info');
+          }
+          
           if (earthquakeControlRef.current.intensity < 0.1) {
             // Save earthquake to history
             if (currentEarthquakeRef.current) {
@@ -301,21 +319,12 @@ function App() {
             earthquakeControlRef.current.intensity = 0;
             earthquakeControlRef.current.phase = 0;
             earthquakeControlRef.current.alarmDeactivated = false;
-            if (earthquakeStatus === 'on') {
-              setEarthquakeStatus('off');
-            }
+            earthquakeControlRef.current.alarmActive = false;  // Reset alarm state
+            // Always turn off alarm when earthquake ends
+            setEarthquakeStatus('off');
             setCurrentIntensity(0);
             setPeakIntensity(0); // Reset peak after earthquake ends
             addLog('Seismic activity ended', 'info');
-          } else if (earthquakeControlRef.current.intensity < 3.0 && !earthquakeControlRef.current.alarmDeactivated && earthquakeStatus === 'on') {
-            // Turn off alarm if intensity drops below 3.0 (only once per earthquake)
-            setEarthquakeStatus('off');
-            earthquakeControlRef.current.alarmDeactivated = true;
-            addLog(`Magnitude dropped below 3.0 (current: ${earthquakeControlRef.current.intensity.toFixed(1)}), alarm deactivated`, 'info');
-          } else if (earthquakeControlRef.current.intensity >= 3.0 && earthquakeControlRef.current.alarmDeactivated) {
-            // Re-activate alarm if intensity goes back above 3.0
-            setEarthquakeStatus('on');
-            earthquakeControlRef.current.alarmDeactivated = false;
           }
         } else {
           // No earthquake activity - ensure magnitude shows 0.0
@@ -431,6 +440,7 @@ function App() {
       
       setCurrentIntensity(intensity);
       setPeakIntensity(intensity); // Set initial peak for manual trigger
+      earthquakeControlRef.current.alarmActive = true;  // Set alarm state
       setEarthquakeStatus('on');
       addLog(`Earthquake detected! Magnitude: ${intensity.toFixed(1)}`, 'alarm');
     } else {
