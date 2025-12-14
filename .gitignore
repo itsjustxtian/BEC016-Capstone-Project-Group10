@@ -3,3 +3,29 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Node.js dependencies
+node_modules/
+webapp/node_modules/
+serial-bridge/node_modules/
+
+# Production build
+webapp/build/
+webapp/dist/
+
+# Environment variables
+webapp/.env
+webapp/.env.local
+webapp/.env.production
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+*.swp
+*.swo
+.DS_Store
