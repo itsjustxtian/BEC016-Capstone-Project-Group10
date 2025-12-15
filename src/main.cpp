@@ -1,16 +1,16 @@
 #include <Arduino.h>
 // Include the required libraries
-#include <WiFi.h>                // Provides functions to connect the ESP32 to a WiFi network
-#include <WiFiClientSecure.h>    // Enables secure (SSL/TLS) communication, required for AWS IoT
-#include <PubSubClient.h>        // Handles MQTT protocol (publish-subscribe model)
-#include "secrets.h"             // Custom header file that stores WiFi and AWS credentials (keeps them separate from main code)
-#include <Adafruit_MPU6050.h>    // MPU6050 accelerometer and gyroscope library
-#include <Adafruit_Sensor.h>     // Unified sensor library
-#include <Wire.h>                // I2C communication library
-#include <ArduinoJson.h>         // Creating and parsing JSON Document
+#include <WiFi.h>             // Provides functions to connect the ESP32 to a WiFi network
+#include <WiFiClientSecure.h> // Enables secure (SSL/TLS) communication, required for AWS IoT
+#include <PubSubClient.h>     // Handles MQTT protocol (publish-subscribe model)
+#include "secrets.h"          // Custom header file that stores WiFi and AWS credentials (keeps them separate from main code)
+#include <Adafruit_MPU6050.h> // MPU6050 accelerometer and gyroscope library
+#include <Adafruit_Sensor.h>  // Unified sensor library
+#include <Wire.h>             // I2C communication library
+#include <ArduinoJson.h>      // Creating and parsing JSON Document
 
-#define AWS_IOT_PUBLISH_TOPIC "devices/" AWS_IOT_CLIENT_ID "/data" // Topic to publish sensor data to AWS IoT Core
-#define AWS_IOT_SUBSCRIBE_TOPIC  "devices/" AWS_IOT_CLIENT_ID "/commands" // Topic to be subscribe by the ESP32
+#define AWS_IOT_PUBLISH_TOPIC "devices/" AWS_IOT_CLIENT_ID "/data"       // Topic to publish sensor data to AWS IoT Core
+#define AWS_IOT_SUBSCRIBE_TOPIC "devices/" AWS_IOT_CLIENT_ID "/commands" // Topic to be subscribe by the ESP32
 
 #define LED_PIN 19
 #define BUZZER_PIN 18
@@ -28,16 +28,15 @@ float accelX, accelY, accelZ;
 float gyroX, gyroY, gyroZ;
 float temperature;
 
-
-unsigned long lastPublishTime = 0;       // Stores last publish timestamp
-const long publishInterval = 2000;       // Interval in milliseconds (2 seconds)
-                                          // Publishing interval for MPU6050 sensor data
+unsigned long lastPublishTime = 0; // Stores last publish timestamp
+const long publishInterval = 2000; // Interval in milliseconds (2 seconds)
+                                   // Publishing interval for MPU6050 sensor data
 
 unsigned long lastButtonPress = 0;
-const unsigned long debounceDelay = 50;   // 50 ms debounce window
+const unsigned long debounceDelay = 50; // 50 ms debounce window
 
-
-void connectToWiFi() {
+void connectToWiFi()
+{
     // Print a message to the Serial Monitor to indicate connection attempt
     Serial.print("Connecting to WiFi");
 
@@ -48,9 +47,10 @@ void connectToWiFi() {
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     // Keep checking WiFi status until the ESP32 is connected to the network
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);          // Wait half a second before checking again
-        Serial.print(".");   // Print progress indicator
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);        // Wait half a second before checking again
+        Serial.print("."); // Print progress indicator
     }
 
     // Once connected, print confirmation
@@ -58,16 +58,17 @@ void connectToWiFi() {
 }
 
 // Configure and connect to AWS IoT Core using certificates
-void connectToAWS() {
+void connectToAWS()
+{
     // Notify user that the certificate setup is starting
     Serial.println("Configuring certificates...");
-  
+
     // Assign AWS Root Certificate Authority (CA) to the secure WiFi client
     net.setCACert(AWS_CERT_CA);
-  
+
     // Assign the device's own certificate (used to identify the device)
     net.setCertificate(AWS_CERT_CRT);
-  
+
     // Assign the device's private key (used to prove the device owns the certificate)
     net.setPrivateKey(AWS_CERT_PRIVATE);
 
@@ -78,13 +79,15 @@ void connectToAWS() {
     Serial.print("Connecting to AWS IoT");
 
     // Attempt to connect to AWS IoT using the device's "Thing Name"
-    while (!client.connect(AWS_IOT_CLIENT_ID)) {
-        Serial.print(".");  // Show progress
-        delay(100);         // Brief pause between connection attempts
+    while (!client.connect(AWS_IOT_CLIENT_ID))
+    {
+        Serial.print("."); // Show progress
+        delay(100);        // Brief pause between connection attempts
     }
 
     // If we still aren't connected after trying, print an error and return
-    if (!client.connected()) {
+    if (!client.connected())
+    {
         Serial.println(" Connection failed (timeout).");
         return;
     }
@@ -95,16 +98,17 @@ void connectToAWS() {
     // Publish a test message to a specific topic to confirm functionality
     // client.publish(("devices/" AWS_IOT_CLIENT_ID "/data"), "Hello from ESP32!");
 
-    client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);  //Subscribes to incoming topic
+    client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC); // Subscribes to incoming topic
 }
 
-void readSensorData() {
+void readSensorData()
+{
     // Get new sensor events from MPU6050
     sensors_event_t accel, gyro, temp;
-    
+
     // Read sensor data from MPU6050
     mpu.getEvent(&accel, &gyro, &temp);
-    
+
     // Store sensor readings in global variables
     accelX = accel.acceleration.x;
     accelY = accel.acceleration.y;
@@ -113,20 +117,35 @@ void readSensorData() {
     gyroY = gyro.gyro.y;
     gyroZ = gyro.gyro.z;
     temperature = temp.temperature;
-    
+
     // Print sensor readings to serial monitor (required for milestone)
     Serial.println("\n=== MPU6050 Sensor Readings ===");
-    Serial.print("Acceleration X: "); Serial.print(accelX, 2); Serial.println(" m/s^2");
-    Serial.print("Acceleration Y: "); Serial.print(accelY, 2); Serial.println(" m/s^2");
-    Serial.print("Acceleration Z: "); Serial.print(accelZ, 2); Serial.println(" m/s^2");
-    Serial.print("Gyro X: "); Serial.print(gyroX, 4); Serial.println(" rad/s");
-    Serial.print("Gyro Y: "); Serial.print(gyroY, 4); Serial.println(" rad/s");
-    Serial.print("Gyro Z: "); Serial.print(gyroZ, 4); Serial.println(" rad/s");
-    Serial.print("Temperature: "); Serial.print(temperature, 2); Serial.println(" °C");
+    Serial.print("Acceleration X: ");
+    Serial.print(accelX, 2);
+    Serial.println(" m/s^2");
+    Serial.print("Acceleration Y: ");
+    Serial.print(accelY, 2);
+    Serial.println(" m/s^2");
+    Serial.print("Acceleration Z: ");
+    Serial.print(accelZ, 2);
+    Serial.println(" m/s^2");
+    Serial.print("Gyro X: ");
+    Serial.print(gyroX, 4);
+    Serial.println(" rad/s");
+    Serial.print("Gyro Y: ");
+    Serial.print(gyroY, 4);
+    Serial.println(" rad/s");
+    Serial.print("Gyro Z: ");
+    Serial.print(gyroZ, 4);
+    Serial.println(" rad/s");
+    Serial.print("Temperature: ");
+    Serial.print(temperature, 2);
+    Serial.println(" °C");
     Serial.println("---");
 }
 
-void publishMessage(){
+void publishMessage()
+{
     // Create a JSON document in memory with a 512-byte buffer capacity
     StaticJsonDocument<200> doc;
 
@@ -134,12 +153,12 @@ void publishMessage(){
     doc["accelX"] = accelX;
     doc["accelY"] = accelY;
     doc["accelZ"] = accelZ;
-    
+
     // Add gyroscope data to the JSON payload
     doc["gyroX"] = gyroX;
     doc["gyroY"] = gyroY;
     doc["gyroZ"] = gyroZ;
-    
+
     // Add temperature to the JSON payload
     doc["temperature"] = temperature;
 
@@ -154,51 +173,64 @@ void publishMessage(){
     Serial.println(jsonBuffer);
 
     // Publish the JSON String to the defined AWS IoT Topic
-    if (client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer)) {
+    if (client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer))
+    {
         Serial.println("Message published successfully!");
-    } else {
+    }
+    else
+    {
         Serial.println("Failed to publish message.");
     }
     Serial.println("---");
 }
 
-void messageHandler(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Incoming message on topic: ");
-  Serial.println(topic);
+void messageHandler(char *topic, byte *payload, unsigned int length)
+{
+    Serial.print("Incoming message on topic: ");
+    Serial.println(topic);
 
-  JsonDocument doc;
+    JsonDocument doc;
 
-  DeserializationError error = deserializeJson(doc, payload, length);
-  if (error) {
-    Serial.print("Failed to parse JSON: ");
-    Serial.println(error.c_str());
-    return;
-  }
+    DeserializationError error = deserializeJson(doc, payload, length);
+    if (error)
+    {
+        Serial.print("Failed to parse JSON: ");
+        Serial.println(error.c_str());
+        return;
+    }
 
-  if (doc["earthquake"].is<const char*>()) {
-      const char* alarmCommand = doc["earthquake"];
-        if (strcmp(alarmCommand, "on") == 0) {
+    if (doc["earthquake"].is<const char *>())
+    {
+        const char *alarmCommand = doc["earthquake"];
+        if (strcmp(alarmCommand, "on") == 0)
+        {
             digitalWrite(LED_PIN, HIGH);
-            tone(BUZZER_PIN, 2093);   // continuous tone
+            tone(BUZZER_PIN, 2093); // continuous tone
             Serial.println("Alarm ON");
-        } else if (strcmp(alarmCommand, "off") == 0) {
+        }
+        else if (strcmp(alarmCommand, "off") == 0)
+        {
             digitalWrite(LED_PIN, LOW);
-            noTone(BUZZER_PIN);       // stop tone
+            noTone(BUZZER_PIN); // stop tone
             Serial.println("Alarm OFF");
         }
-  }
+    }
 
-  // If there's a 'message' key, print its value
-  if (doc["message"].is<const char*>()) {
-    const char* msg = doc["message"];
-    Serial.print("Message: ");
-    Serial.println(msg);
-  } else {
-    Serial.println("No 'message' key found in payload.");
-  }
+    // If there's a 'message' key, print its value
+    if (doc["message"].is<const char *>())
+    {
+        const char *msg = doc["message"];
+        Serial.print("Message: ");
+        Serial.println(msg);
+    }
+    else
+    {
+        Serial.println("No 'message' key found in payload.");
+    }
 }
 
-void setup() {
+void setup()
+{
     // Initialize serial communication for debugging at 115200 bits per second
     Serial.begin(115200);
     delay(1000);
@@ -206,30 +238,32 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     pinMode(BUZZER_PIN, OUTPUT);
     pinMode(BUTTON_PIN, INPUT_PULLUP);
-  
+
     // Print an initial status message to the Serial Monitor
     Serial.println("Starting ESP32 AWS IoT connection...");
-    
+
     // Initialize I2C communication
     Wire.begin();
-    
+
     // Initialize MPU6050 sensor
     Serial.println("Initializing MPU6050 sensor...");
-    if (!mpu.begin()) {
+    if (!mpu.begin())
+    {
         Serial.println("Failed to find MPU6050 chip!");
-        while (1) {
+        while (1)
+        {
             delay(10);
         }
     }
     Serial.println("MPU6050 Found!");
-    
+
     // Configure MPU6050 settings
     mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
     Serial.println("MPU6050 configured!");
     Serial.println("");
-  
+
     // Call function to connect the ESP32 to WiFi
     connectToWiFi();
 
@@ -239,24 +273,29 @@ void setup() {
     client.setCallback(messageHandler); // Register the callback function for incoming messages
 }
 
-void loop() {
-  client.loop();
+void loop()
+{
+    client.loop();
 
-  // Sensor publishing logic...
-  if (millis() - lastPublishTime >= publishInterval) {
-    readSensorData();
-    if (client.connected()) publishMessage();
-    lastPublishTime = millis();
-  }
+    // Sensor publishing logic...
+    if (millis() - lastPublishTime >= publishInterval)
+    {
+        readSensorData();
+        if (client.connected())
+            publishMessage();
+        lastPublishTime = millis();
+    }
 
     // 🚨 Alarm stop condition with debounce
     int buttonState = digitalRead(BUTTON_PIN);
 
-    if (buttonState == LOW) {  // button pressed
+    if (buttonState == LOW)
+    { // button pressed
         unsigned long currentTime = millis();
 
         // Only act if enough time has passed since last press
-        if (currentTime - lastButtonPress > debounceDelay) {
+        if (currentTime - lastButtonPress > debounceDelay)
+        {
             digitalWrite(LED_PIN, LOW);
             noTone(BUZZER_PIN);
             Serial.println("Alarm stopped by button");
